@@ -67,11 +67,12 @@ const ChatPage = () => {
         {messages.map((msg) => (
           <ChatBubble key={msg.id} message={msg} isSelf={msg.sender === username} />
         ))}
+        <TypingIndicator users={typingUsers} />
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <MessageInput onSend={sendMessage} />
+      <MessageInput onSend={sendMessage} onTyping={setTyping} />
     </div>
   );
 };
