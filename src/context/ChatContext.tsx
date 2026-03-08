@@ -53,6 +53,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const upsertMessages = useCallback((incoming: Message[]) => {
+    setMessages((prev) => {
+      const byId = new Map(prev.map((m) => [m.id, m] as const));
+      incoming.forEach((msg) => byId.set(msg.id, msg));
+      return Array.from(byId.values()).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+  }, []);
+
   const fetchMemberCount = useCallback(async (roomId: string) => {
     const { count } = await supabase
       .from("room_members")
@@ -69,28 +79,32 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    setMessages([]);
+    setTypingUsers([]);
+    let isActive = true;
+
     const fetchMessages = async () => {
       const { data } = await supabase
         .from("messages")
         .select("id, sender, text, created_at")
         .eq("room_id", currentRoom.id)
         .order("created_at", { ascending: true });
-      if (data) setMessages(data);
+
+      if (!isActive || !data) return;
+      upsertMessages(data as Message[]);
     };
+
     fetchMessages();
     fetchMemberCount(currentRoom.id);
 
     const channel = supabase
-      .channel(`room-${currentRoom.id}`, { config: { broadcast: { self: false } } })
+      .channel(`room-${currentRoom.id}`, { config: { broadcast: { self: true } } })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${currentRoom.id}` },
         (payload) => {
           const msg = payload.new as Message;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, msg];
-          });
+          upsertMessages([msg]);
         }
       )
       .on(
@@ -109,15 +123,26 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return prev;
         });
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          fetchMessages();
+        }
+      });
 
     channelRef.current = channel;
 
+    const pollId = setInterval(() => {
+      fetchMessages();
+      fetchMemberCount(currentRoom.id);
+    }, 3000);
+
     return () => {
+      isActive = false;
+      clearInterval(pollId);
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [currentRoom?.id, fetchMemberCount]);
+  }, [currentRoom?.id, fetchMemberCount, upsertMessages]);
 
   const setTyping = useCallback((isTyping: boolean) => {
     if (!channelRef.current) return;
@@ -199,13 +224,47 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendMessage = useCallback(async (text: string) => {
     if (!currentRoom || !text.trim()) return;
+
+    const trimmed = text.trim();
+    const optimisticId = `temp-${crypto.randomUUID()}`;
+
     setTyping(false);
-    await supabase.from("messages").insert({
-      room_id: currentRoom.id,
-      sender: username,
-      text: text.trim(),
+    upsertMessages([
+      {
+        id: optimisticId,
+        sender: username,
+        text: trimmed,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        room_id: currentRoom.id,
+        sender: username,
+        text: trimmed,
+      })
+      .select("id, sender, text, created_at")
+      .single();
+
+    if (error || !data) {
+      setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
+      return;
+    }
+
+    setMessages((prev) => {
+      const byId = new Map(
+        prev
+          .filter((msg) => msg.id !== optimisticId)
+          .map((msg) => [msg.id, msg] as const)
+      );
+      byId.set(data.id, data as Message);
+      return Array.from(byId.values()).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
     });
-  }, [currentRoom, username, setTyping]);
+  }, [currentRoom, username, setTyping, upsertMessages]);
 
   return (
     <ChatContext.Provider value={{ username, setUsername, currentRoom, messages, memberCount, typingUsers, createRoom, joinRoom, leaveRoom, sendMessage, setTyping }}>
