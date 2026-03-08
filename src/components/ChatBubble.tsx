@@ -1,4 +1,4 @@
-import { Message } from "@/types/chat";
+import { Message } from "@/context/ChatContext";
 
 interface ChatBubbleProps {
   message: Message;
@@ -6,7 +6,7 @@ interface ChatBubbleProps {
 }
 
 export const ChatBubble = ({ message, isSelf }: ChatBubbleProps) => {
-  const time = new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const time = new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div className={`flex ${isSelf ? "justify-end" : "justify-start"} animate-fade-in`}>
