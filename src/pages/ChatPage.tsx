@@ -2,12 +2,13 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChatContext } from "@/context/ChatContext";
 import { ChatBubble } from "@/components/ChatBubble";
+import { TypingIndicator } from "@/components/TypingIndicator";
 import { MessageInput } from "@/components/MessageInput";
 import { ArrowLeft, Users, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
 const ChatPage = () => {
-  const { username, currentRoom, messages, memberCount, sendMessage, leaveRoom } = useChatContext();
+  const { username, currentRoom, messages, memberCount, typingUsers, sendMessage, leaveRoom, setTyping } = useChatContext();
   const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -66,11 +67,12 @@ const ChatPage = () => {
         {messages.map((msg) => (
           <ChatBubble key={msg.id} message={msg} isSelf={msg.sender === username} />
         ))}
+        <TypingIndicator users={typingUsers} />
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <MessageInput onSend={sendMessage} />
+      <MessageInput onSend={sendMessage} onTyping={setTyping} />
     </div>
   );
 };
