@@ -27,6 +27,7 @@ interface ChatContextType {
   setUsername: (name: string) => void;
   currentRoom: Room | null;
   messages: Message[];
+  memberCount: number;
   createRoom: (name: string) => Promise<Room>;
   joinRoom: (code: string) => Promise<Room | null>;
   leaveRoom: () => Promise<void>;
@@ -45,12 +46,22 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [username, setUsername] = useState("");
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [memberCount, setMemberCount] = useState(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
+
+  const fetchMemberCount = useCallback(async (roomId: string) => {
+    const { count } = await supabase
+      .from("room_members")
+      .select("*", { count: "exact", head: true })
+      .eq("room_id", roomId);
+    setMemberCount(count ?? 0);
+  }, []);
 
   // Subscribe to real-time messages when in a room
   useEffect(() => {
     if (!currentRoom) {
       setMessages([]);
+      setMemberCount(0);
       return;
     }
 
@@ -64,8 +75,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data) setMessages(data);
     };
     fetchMessages();
+    fetchMemberCount(currentRoom.id);
 
-    // Subscribe to new messages
+    // Subscribe to new messages and member changes
     const channel = supabase
       .channel(`room-${currentRoom.id}`)
       .on(
@@ -79,6 +91,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_members", filter: `room_id=eq.${currentRoom.id}` },
+        () => {
+          fetchMemberCount(currentRoom.id);
+        }
+      )
       .subscribe();
 
     channelRef.current = channel;
@@ -87,7 +106,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [currentRoom?.id]);
+  }, [currentRoom?.id, fetchMemberCount]);
+
+  const addMember = useCallback(async (roomId: string) => {
+    await supabase.from("room_members").upsert(
+      { room_id: roomId, username },
+      { onConflict: "room_id,username" }
+    );
+  }, [username]);
 
   const createRoom = useCallback(async (name: string): Promise<Room> => {
     const code = generateCode();
@@ -98,9 +124,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
     if (error || !data) throw new Error("Failed to create room");
     const room: Room = data;
+    await addMember(room.id);
     setCurrentRoom(room);
     return room;
-  }, []);
+  }, [addMember]);
 
   const joinRoom = useCallback(async (code: string): Promise<Room | null> => {
     const { data } = await supabase
@@ -110,19 +137,35 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
     if (!data) return null;
     const room: Room = data;
+    await addMember(room.id);
     setCurrentRoom(room);
     return room;
-  }, []);
+  }, [addMember]);
 
   const leaveRoom = useCallback(async () => {
     if (!currentRoom) return;
-    // Delete all messages in the room (temporary chats)
-    await supabase.from("messages").delete().eq("room_id", currentRoom.id);
-    // Optionally delete the room itself
-    await supabase.from("rooms").delete().eq("id", currentRoom.id);
+    const roomId = currentRoom.id;
+
+    // Remove self from members
+    await supabase.from("room_members").delete()
+      .eq("room_id", roomId)
+      .eq("username", username);
+
+    // Check remaining members
+    const { count } = await supabase
+      .from("room_members")
+      .select("*", { count: "exact", head: true })
+      .eq("room_id", roomId);
+
+    // If no members left, delete room (cascade deletes messages)
+    if (count === 0) {
+      await supabase.from("messages").delete().eq("room_id", roomId);
+      await supabase.from("rooms").delete().eq("id", roomId);
+    }
+
     setCurrentRoom(null);
     setMessages([]);
-  }, [currentRoom]);
+  }, [currentRoom, username]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!currentRoom || !text.trim()) return;
@@ -134,7 +177,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [currentRoom, username]);
 
   return (
-    <ChatContext.Provider value={{ username, setUsername, currentRoom, messages, createRoom, joinRoom, leaveRoom, sendMessage }}>
+    <ChatContext.Provider value={{ username, setUsername, currentRoom, messages, memberCount, createRoom, joinRoom, leaveRoom, sendMessage }}>
       {children}
     </ChatContext.Provider>
   );
