@@ -21,8 +21,9 @@ const WelcomePage = () => {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <MessageCircle className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Whisper</h1>
+          <h1 className="text-2xl font-bold text-foreground">Secret Chat ☠️</h1>
           <p className="text-sm text-muted-foreground mt-1">Temporary rooms. No trace.</p>
+          <p className="text-[10px] text-muted-foreground/50 mt-2">by Rohit Sharma</p>
         </div>
 
         <div className="space-y-4">
