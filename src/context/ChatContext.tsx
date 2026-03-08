@@ -53,6 +53,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const upsertMessages = useCallback((incoming: Message[]) => {
+    setMessages((prev) => {
+      const byId = new Map(prev.map((m) => [m.id, m] as const));
+      incoming.forEach((msg) => byId.set(msg.id, msg));
+      return Array.from(byId.values()).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+  }, []);
+
   const fetchMemberCount = useCallback(async (roomId: string) => {
     const { count } = await supabase
       .from("room_members")
