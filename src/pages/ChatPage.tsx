@@ -50,6 +50,10 @@ const ChatPage = () => {
             {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
           </button>
         </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Users className="w-4 h-4" />
+          <span className="text-xs">{memberCount}</span>
+        </div>
       </div>
 
       {/* Messages */}
