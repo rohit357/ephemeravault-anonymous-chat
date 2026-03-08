@@ -7,7 +7,7 @@ import { ArrowLeft, Users, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
 const ChatPage = () => {
-  const { username, currentRoom, messages, sendMessage, leaveRoom } = useChatContext();
+  const { username, currentRoom, messages, memberCount, sendMessage, leaveRoom } = useChatContext();
   const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -49,6 +49,10 @@ const ChatPage = () => {
             {currentRoom.code}
             {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
           </button>
+        </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Users className="w-4 h-4" />
+          <span className="text-xs">{memberCount}</span>
         </div>
       </div>
 
