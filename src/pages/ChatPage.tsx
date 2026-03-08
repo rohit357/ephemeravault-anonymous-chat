@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChatContext } from "@/context/ChatContext";
 import { ChatBubble } from "@/components/ChatBubble";
+import { TypingIndicator } from "@/components/TypingIndicator";
 import { MessageInput } from "@/components/MessageInput";
 import { ArrowLeft, Users, Copy, Check } from "lucide-react";
 import { useState } from "react";
