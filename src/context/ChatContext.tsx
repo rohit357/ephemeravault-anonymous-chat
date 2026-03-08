@@ -79,28 +79,32 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    setMessages([]);
+    setTypingUsers([]);
+    let isActive = true;
+
     const fetchMessages = async () => {
       const { data } = await supabase
         .from("messages")
         .select("id, sender, text, created_at")
         .eq("room_id", currentRoom.id)
         .order("created_at", { ascending: true });
-      if (data) setMessages(data);
+
+      if (!isActive || !data) return;
+      upsertMessages(data as Message[]);
     };
+
     fetchMessages();
     fetchMemberCount(currentRoom.id);
 
     const channel = supabase
-      .channel(`room-${currentRoom.id}`, { config: { broadcast: { self: false } } })
+      .channel(`room-${currentRoom.id}`, { config: { broadcast: { self: true } } })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${currentRoom.id}` },
         (payload) => {
           const msg = payload.new as Message;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, msg];
-          });
+          upsertMessages([msg]);
         }
       )
       .on(
@@ -119,15 +123,26 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return prev;
         });
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          fetchMessages();
+        }
+      });
 
     channelRef.current = channel;
 
+    const pollId = setInterval(() => {
+      fetchMessages();
+      fetchMemberCount(currentRoom.id);
+    }, 3000);
+
     return () => {
+      isActive = false;
+      clearInterval(pollId);
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [currentRoom?.id, fetchMemberCount]);
+  }, [currentRoom?.id, fetchMemberCount, upsertMessages]);
 
   const setTyping = useCallback((isTyping: boolean) => {
     if (!channelRef.current) return;
