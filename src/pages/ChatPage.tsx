@@ -8,7 +8,7 @@ import { ArrowLeft, Users, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
 const ChatPage = () => {
-  const { username, currentRoom, messages, memberCount, sendMessage, leaveRoom } = useChatContext();
+  const { username, currentRoom, messages, memberCount, typingUsers, sendMessage, leaveRoom, setTyping } = useChatContext();
   const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
