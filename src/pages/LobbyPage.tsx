@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChatContext } from "@/context/ChatContext";
 import { Plus, LogIn, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 const LobbyPage = () => {
   const { username, createRoom, joinRoom } = useChatContext();
@@ -12,25 +13,40 @@ const LobbyPage = () => {
   const [createdCode, setCreatedCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!roomName.trim()) return;
-    const code = createRoom(roomName.trim());
-    setCreatedCode(code);
+    setLoading(true);
+    try {
+      const room = await createRoom(roomName.trim());
+      setCreatedCode(room.code);
+    } catch {
+      toast.error("Failed to create room");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEnterRoom = () => {
     navigate("/chat");
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     setError("");
     if (!joinCode.trim()) return;
-    const ok = joinRoom(joinCode.trim());
-    if (ok) {
-      navigate("/chat");
-    } else {
-      setError("Room not found. Check the code.");
+    setLoading(true);
+    try {
+      const room = await joinRoom(joinCode.trim());
+      if (room) {
+        navigate("/chat");
+      } else {
+        setError("Room not found. Check the code.");
+      }
+    } catch {
+      setError("Something went wrong.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,8 +106,8 @@ const LobbyPage = () => {
               <button onClick={() => setMode("idle")} className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-80 transition-all">
                 Back
               </button>
-              <button onClick={handleCreate} disabled={!roomName.trim()} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-30 transition-all">
-                Create
+              <button onClick={handleCreate} disabled={!roomName.trim() || loading} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-30 transition-all">
+                {loading ? "Creating..." : "Create"}
               </button>
             </div>
           </div>
@@ -130,8 +146,8 @@ const LobbyPage = () => {
               <button onClick={() => { setMode("idle"); setError(""); }} className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-80 transition-all">
                 Back
               </button>
-              <button onClick={handleJoin} disabled={!joinCode.trim()} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-30 transition-all">
-                Join
+              <button onClick={handleJoin} disabled={!joinCode.trim() || loading} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-30 transition-all">
+                {loading ? "Joining..." : "Join"}
               </button>
             </div>
           </div>
