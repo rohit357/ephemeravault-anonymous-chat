@@ -224,13 +224,47 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendMessage = useCallback(async (text: string) => {
     if (!currentRoom || !text.trim()) return;
+
+    const trimmed = text.trim();
+    const optimisticId = `temp-${crypto.randomUUID()}`;
+
     setTyping(false);
-    await supabase.from("messages").insert({
-      room_id: currentRoom.id,
-      sender: username,
-      text: text.trim(),
+    upsertMessages([
+      {
+        id: optimisticId,
+        sender: username,
+        text: trimmed,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        room_id: currentRoom.id,
+        sender: username,
+        text: trimmed,
+      })
+      .select("id, sender, text, created_at")
+      .single();
+
+    if (error || !data) {
+      setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
+      return;
+    }
+
+    setMessages((prev) => {
+      const byId = new Map(
+        prev
+          .filter((msg) => msg.id !== optimisticId)
+          .map((msg) => [msg.id, msg] as const)
+      );
+      byId.set(data.id, data as Message);
+      return Array.from(byId.values()).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
     });
-  }, [currentRoom, username, setTyping]);
+  }, [currentRoom, username, setTyping, upsertMessages]);
 
   return (
     <ChatContext.Provider value={{ username, setUsername, currentRoom, messages, memberCount, typingUsers, createRoom, joinRoom, leaveRoom, sendMessage, setTyping }}>
