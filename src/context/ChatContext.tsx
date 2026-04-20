@@ -187,35 +187,27 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [addMember]);
 
   const joinRoom = useCallback(async (code: string): Promise<Room | null> => {
-    const { data } = await supabase
-      .from("rooms")
-      .select("id, code, name")
-      .eq("code", code.toUpperCase())
-      .single();
-    if (!data) return null;
-    const room: Room = data;
-    await addMember(room.id);
-    setCurrentRoom(room);
-    return room;
+    // Use security-definer RPC; direct SELECT on rooms is restricted by RLS.
+    const { data, error } = await supabase.rpc("get_room_by_code", {
+      _code: code.toUpperCase(),
+    });
+    if (error || !data || data.length === 0) return null;
+    const row = data[0] as Room;
+    await addMember(row.id);
+    setCurrentRoom(row);
+    return row;
   }, [addMember]);
 
   const leaveRoom = useCallback(async () => {
     if (!currentRoom) return;
     const roomId = currentRoom.id;
 
-    await supabase.from("room_members").delete()
-      .eq("room_id", roomId)
-      .eq("username", username);
-
-    const { count } = await supabase
-      .from("room_members")
-      .select("*", { count: "exact", head: true })
-      .eq("room_id", roomId);
-
-    if (count === 0) {
-      await supabase.from("messages").delete().eq("room_id", roomId);
-      await supabase.from("rooms").delete().eq("id", roomId);
-    }
+    // RPC removes only this user's membership and auto-deletes the room
+    // (and its messages) when no members remain.
+    await supabase.rpc("leave_room", {
+      _room_id: roomId,
+      _username: username,
+    });
 
     setCurrentRoom(null);
     setMessages([]);
