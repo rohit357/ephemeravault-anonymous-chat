@@ -15,10 +15,14 @@ export interface Room {
   name: string;
 }
 
-function generateCode(): string {
+export function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const array = new Uint32Array(6);
+  window.crypto.getRandomValues(array);
   let code = "";
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 6; i++) {
+    code += chars[array[i] % chars.length];
+  }
   return code;
 }
 
