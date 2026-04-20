@@ -101,7 +101,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_room_by_code: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          id: string
+          name: string
+        }[]
+      }
+      leave_room: {
+        Args: { _room_id: string; _username: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
