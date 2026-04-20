@@ -135,14 +135,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     channelRef.current = channel;
 
-    const pollId = setInterval(() => {
-      fetchMessages();
-      fetchMemberCount(currentRoom.id);
-    }, 3000);
-
     return () => {
       isActive = false;
-      clearInterval(pollId);
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
