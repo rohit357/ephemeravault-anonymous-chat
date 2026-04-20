@@ -1,39 +1,78 @@
 # Secret Chat ☠️
 
-Temporary private chat rooms. No trace.
+> Temporary private chat rooms. **No accounts. No history. No trace.**
 
-## Getting Started
+<p align="center">
+  <img src="./public/home-screenshot.png" alt="Secret Chat home screen" width="820" />
+</p>
 
-To run this project locally, you will need Node.js and npm installed. Follow these steps:
+Secret Chat is a minimalist, anonymous group chat app. Drop a name, spin up a
+room, share the 6-character code with whoever you want, and start talking.
+The moment the last person leaves, the room and every message in it are gone
+forever.
 
-1. Clone the repository:
-   ```sh
-   git clone <YOUR_GIT_URL>
-   cd <YOUR_PROJECT_NAME>
-   ```
+Built by **Rohit Sharma**.
 
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
+## ✨ Features
 
-3. Start the development server:
-   ```sh
-   npm run dev
-   ```
+- 🕶️ **Zero sign-up** — just type a display name and you're in.
+- 🔑 **Room codes** — share a 6-char code; anyone with it can join, no one else can list it.
+- 💬 **Real-time messaging** — powered by Supabase Realtime, with optimistic UI for instant feedback.
+- ⌨️ **Typing indicators** — see when someone in the room is typing.
+- 👥 **Live member count** — know who's around without a heavy presence panel.
+- 🧹 **Self-destructing rooms** — when the last member leaves, the room and all its messages are auto-deleted via a server-side function.
+- 🌑 **Dark, distraction-free UI** — built with Tailwind + shadcn/ui semantic tokens.
 
-## Technologies Used
+## 🧱 Tech stack
 
-This project is built with:
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Supabase
+- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend:** Lovable Cloud (Supabase) — Postgres, Row Level Security, Realtime, RPCs
+- **Routing:** React Router
+- **State:** React Context + Supabase Realtime channels
 
-## Contributing
+## 🗂️ Project structure
 
-- Fork the repository.
-- Make your changes and commit them.
-- Submit a pull request.
+```
+src/
+├── components/        # ChatBubble, MessageInput, TypingIndicator, NavLink, ui/
+├── context/
+│   └── ChatContext.tsx   # Rooms, messages, members, typing, realtime sync
+├── pages/
+│   ├── WelcomePage.tsx   # Enter name
+│   ├── LobbyPage.tsx     # Create or join a room
+│   ├── ChatPage.tsx      # The chat itself
+│   └── NotFound.tsx
+└── integrations/supabase/  # Auto-generated client + types
+```
+
+## 🚀 Run locally
+
+```sh
+git clone <your-fork-url>
+cd secret-chat
+npm install
+npm run dev
+```
+
+Then open http://localhost:8080.
+
+> The `.env` file ships with **publishable anon keys** — these are designed to
+> live in client bundles and are safe to commit. See [`SECURITY.md`](./SECURITY.md)
+> for the full threat model.
+
+## 🔒 Security
+
+This repo is intentionally public. Read [`SECURITY.md`](./SECURITY.md) for:
+
+- Why the anon key in `.env` is safe to commit
+- The exact RLS policies protecting the database
+- The two security-definer RPCs (`get_room_by_code`, `leave_room`) that gate access
+- Known residual risks of an unauthenticated chat app
+
+## 🤝 Contributing
+
+PRs welcome — fork, branch, and open a pull request.
+
+---
+
+Made with ☕ and ☠️ by Rohit Sharma.
