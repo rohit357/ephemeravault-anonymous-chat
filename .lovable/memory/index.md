@@ -1,7 +1,7 @@
 # Project Memory
 
 ## Core
-App name: EphemeraVault 🔐 (rebranded from Secret Chat). Developer credit: Rohit Sharma.
+App name: EphemeraVault 🔐. Developer credit: Rohit Sharma.
 Dark theme design system. Primary font: Space Grotesk.
 No auth system required; username-only access.
 Supabase handles DB persistence, real-time sync, and typing indicators.
