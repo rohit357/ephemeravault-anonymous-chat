@@ -11,8 +11,6 @@ room, share the 6-character code with whoever you want, and start talking.
 The moment the last person leaves, the room and every message in it are gone
 forever.
 
-Built by **Rohit Sharma**.
-
 ## ✨ Features
 
 - 🕶️ **Zero sign-up** — just type a display name and you're in.
@@ -75,4 +73,4 @@ PRs welcome — fork, branch, and open a pull request.
 
 ---
 
-Made with ☕ and ☠️ by Rohit Sharma.
+Made with ☕ and ☠️ by rohit357
