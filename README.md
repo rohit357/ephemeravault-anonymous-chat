@@ -3,10 +3,6 @@
 > Temporary private chat rooms. **No accounts. No history. No trace.**
 
 <p align="center">
-  <img src="./public/home-screenshot.png" alt="EphemeraVault home screen" width="820" />
-</p>
-
-<p align="center">
   <img src="./public/demo.gif" alt="EphemeraVault flow demo: welcome → lobby → create room → chat" width="820" />
 </p>
 
