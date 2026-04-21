@@ -1,12 +1,12 @@
-# Secret Chat ☠️
+# EphemeraVault 🔐
 
 > Temporary private chat rooms. **No accounts. No history. No trace.**
 
 <p align="center">
-  <img src="./public/home-screenshot.png" alt="Secret Chat home screen" width="820" />
+  <img src="./public/home-screenshot.png" alt="EphemeraVault home screen" width="820" />
 </p>
 
-Secret Chat is a minimalist, anonymous group chat app. Drop a name, spin up a
+EphemeraVault is a minimalist, anonymous group chat app. Drop a name, spin up a
 room, share the 6-character code with whoever you want, and start talking.
 The moment the last person leaves, the room and every message in it are gone
 forever.
@@ -47,7 +47,7 @@ src/
 
 ```sh
 git clone <your-fork-url>
-cd secret-chat
+cd ephemeravault
 npm install
 npm run dev
 ```
@@ -73,4 +73,4 @@ PRs welcome — fork, branch, and open a pull request.
 
 ---
 
-Made with ☕ and ☠️ by rohit357
+Made with ☕ and 🔐 by rohit357
