@@ -77,4 +77,4 @@ PRs welcome — fork, branch, and open a pull request.
 
 ---
 
-Made with ☕ and 🔐 by rohit357
+Made with ☕ and 🔐 by Rohit Sharma
