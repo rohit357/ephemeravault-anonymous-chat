@@ -6,6 +6,10 @@
   <img src="./public/home-screenshot.png" alt="EphemeraVault home screen" width="820" />
 </p>
 
+<p align="center">
+  <img src="./public/demo.gif" alt="EphemeraVault flow demo: welcome → lobby → create room → chat" width="820" />
+</p>
+
 EphemeraVault is a minimalist, anonymous group chat app. Drop a name, spin up a
 room, share the 6-character code with whoever you want, and start talking.
 The moment the last person leaves, the room and every message in it are gone
