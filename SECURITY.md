@@ -16,7 +16,7 @@ Lovable Cloud dashboard.
 
 ## Threat model
 
-Secret Chat ☠️ is an **unauthenticated**, throwaway chat app. Users pick a
+Ephemeravault-anonymous-chat is an **unauthenticated**, throwaway chat app. Users pick a
 display name (no password, no account) and either create a room or join one
 using a 6-character room code. Rooms and messages are auto-deleted when the
 last member leaves.
